@@ -5,14 +5,15 @@ Created on May 4, 2013
 '''
 
 from protorpc import messages
+from protorpc.message_types import DateTimeField
 
 
 class TaskMessage(messages.Message):
     """ProtoRPC message definition to represent a task"""
     user_service_id = messages.StringField(1)
     local_server_id = messages.StringField(2)
-    creation_date = messages.IntegerField(3)
-    completion_date = messages.IntegerField(4)
+    creation_date = DateTimeField(3)
+    completion_date = DateTimeField(4)
     number_of_files = messages.IntegerField(5)
     status = messages.StringField(6)
     
