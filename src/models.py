@@ -7,6 +7,23 @@ Classes defining the Entity stored in the AppEngine Datastore
 '''
 from google.appengine.ext import db
 
+class BaseModel(db.Model):
+    def to_message(self, *args, **kwargs):
+        model_class_name = self.__class__.__name__
+        message_class_name = ''.join((model_class_name, 'Message'))
+        messages_module = __import__(kwargs.pop('import_module', 'api_messages'))
+        message_class = getattr(messages_module, message_class_name)
+        attributes = {attr: getattr(self, attr) for attr in args}
+        return message_class(**attributes)
+    
+    def from_message(self):
+#         entity =  nameofcalss-Message(**attr)
+        pass
+    
+    def put_from_message(self):
+        pass
+    
+
 class User(db.Model):
     email = db.EmailProperty()
     name = db.StringProperty()
@@ -26,7 +43,7 @@ class UserService(db.Model):
 class LocalServer(db.Model):
     authentication_token = db.StringProperty(required=True)
     
-class Task(db.Model):
+class Task(BaseModel):
     user_service_id = db.Reference(UserService,
                                    required=True,
                                    collection_name='tasks')
@@ -37,5 +54,7 @@ class Task(db.Model):
                                         required=True)
     completion_date = db.DateTimeProperty(required=True)
     number_of_files = db.IntegerProperty(required=True)
-    status = db.StringProperty(required=True,
-                               choices=('created', 'validated', 'in_progress', 'done'))
+    status = db.StringProperty(required=False,
+                               choices=set(['created', 'validated', 'in_progress', 'done']))
+    
+    
