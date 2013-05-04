@@ -7,7 +7,10 @@ Created on May 4, 2013
 from protorpc import messages
 from protorpc.message_types import DateTimeField
 
-
+class TaskRequestMessage(messages.Message):
+    """ProtoRPC message definition to represent a task query"""
+    task_id = messages.IntegerField(1, required=True)
+    
 class TaskMessage(messages.Message):
     """ProtoRPC message definition to represent a task"""
     user_service_id = messages.StringField(1)
@@ -27,9 +30,9 @@ class UserServiceMessage(messages.Message):
     
 class TasksMessage(messages.Message):
     """ProtoRPC message definition to represent a list of tasks"""
-    tasks = messages.MessageField(1)
+    tasks = messages.MessageField(TaskMessage, 1)
     
 class UserServicesMessage(messages.Message):
     """ProtoRPC message definition to represent a list of tasks"""
-    user_services = messages.MessageField(1)
+    user_services = messages.MessageField(UserService, 1)
 
