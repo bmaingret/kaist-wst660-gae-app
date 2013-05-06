@@ -34,5 +34,5 @@ class TasksMessage(messages.Message):
     
 class UserServicesMessage(messages.Message):
     """ProtoRPC message definition to represent a list of tasks"""
-    user_services = messages.MessageField(UserService, 1)
+    user_services = messages.MessageField(UserServiceMessage, 1)
 
