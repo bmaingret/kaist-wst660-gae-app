@@ -5,5 +5,9 @@ api_version: 1
 threadsafe: true
 
 handlers:
+#Endpoints handler
+- url: /_ah/spi/.*
+  script: services_api.application
+#Generic handler
 - url: /.*
   script: helloworld.app
