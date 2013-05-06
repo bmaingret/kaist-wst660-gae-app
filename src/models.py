@@ -23,6 +23,11 @@ class BaseModel(db.Model):
     def put_from_message(self):
         pass
     
+    @staticmethod
+    def _get_attr_id_builder(attribute_name):
+        def _get_attr_id(self):
+            return str(getattr(self, attribute_name).key())
+        return _get_attr_id
 
 class User(db.Model):
     email = db.EmailProperty()
@@ -32,22 +37,25 @@ class Service(db.Model):
     name = db.StringProperty(required=True)
     
 class UserService(db.Model):
-    user_id = db.ReferenceProperty(User,
+    user = db.ReferenceProperty(User,
                                    required=True,
                                    collection_name='user_services')
-    service_id = db.ReferenceProperty(Service,
+    service = db.ReferenceProperty(Service,
                                       required=True)
     access_token = db.StringProperty(required=True)
     refresh_token = db.StringProperty(required=True)
+    user_id = property(BaseModel._get_attr_id_builder('user'))
+    service_id = property(BaseModel._get_attr_id_builder('service'))
+
 
 class LocalServer(db.Model):
     authentication_token = db.StringProperty(required=True)
     
 class Task(BaseModel):
-    user_service_id = db.Reference(UserService,
+    user_service = db.Reference(UserService,
                                    required=True,
                                    collection_name='tasks')
-    local_server_id = db.ReferenceProperty(LocalServer,
+    local_server = db.ReferenceProperty(LocalServer,
                                            required=True,
                                            collection_name='tasks')
     creation_date = db.DateTimeProperty(auto_now_add=True,
@@ -56,5 +64,7 @@ class Task(BaseModel):
     number_of_files = db.IntegerProperty(required=True)
     status = db.StringProperty(required=False,
                                choices=set(['created', 'validated', 'in_progress', 'done']))
+    user_service_id = property(BaseModel._get_attr_id_builder('user_service'))
+    local_server_id = property(BaseModel._get_attr_id_builder('local_server'))
     
     

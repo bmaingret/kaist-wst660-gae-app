@@ -9,16 +9,21 @@ from google.appengine.ext import testbed
 from protorpc import messages
 import models
 
+class TestModel2(models.BaseModel):
+    test_string = db.StringProperty(required=True)
 
 class TestModel(models.BaseModel):
     test_string = db.StringProperty(required=True)
     test_int = db.IntegerProperty()
     test_bool = db.BooleanProperty()
+    test2 = db.ReferenceProperty(TestModel2, required=True)
+    test_id = property(models.BaseModel._get_attr_id_builder('test2'))
     
 class TestModelMessage(messages.Message):
     test_string = messages.StringField(1)
     test_int = messages.IntegerField(2)
-    test_bool= messages.BooleanField(3)
+    test_bool = messages.BooleanField(3)
+    test_id = messages.StringField(4)
         
 class Test(unittest.TestCase):
     """ Test class for the model module"""
@@ -27,21 +32,29 @@ class Test(unittest.TestCase):
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
-        
-        self.entity = TestModel(test_string="test string", test_int=2)
+        self.entity2 = TestModel2(test_string="test entity 2 ")
+        self.entity2.put()
+        self.entity = TestModel(test_string="test string",
+                                test_int=2,
+                                test2 = self.entity2)
+        self.empty_message = self.entity.to_message(import_module='test_models')
+        self.message = self.entity.to_message('test_string', 'test_int', 'test_id',
+                                         import_module='test_models')
 
     def tearDown(self):
         self.testbed.deactivate()
 
     def test_to_message(self):
-        empty_message = self.entity.to_message(import_module='test_models')
-        message = self.entity.to_message('test_string', 'test_int',
-                                         import_module='test_models')
-        self.assertIsInstance(message, TestModelMessage)
-        self.assertIsNone(empty_message.test_string)
-        self.assertIsNone(message.test_bool)
-        self.assertIs(message.test_string, self.entity.test_string)
-        self.assertIs(message.test_int, self.entity.test_int)
+        self.assertIsInstance(self.message, TestModelMessage)
+        self.assertIsNone(self.empty_message.test_string)
+        self.assertIsNone(self.message.test_bool)
+        self.assertIs(self.message.test_string, self.entity.test_string)
+        self.assertIs(self.message.test_int, self.entity.test_int)
+    
+    def test_get_attr_id(self):
+        self.assertIs(self.entity.test_id, str(self.entity.test2.key()))
+        self.assertIs(self.message.test_id, self.entity.test_id)
+        self.assertIs(self.message.test_id, str(self.entity.test2.key()))        
 
 
 if __name__ == "__main__":
