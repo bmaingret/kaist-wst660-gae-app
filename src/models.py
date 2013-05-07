@@ -60,9 +60,9 @@ class Task(BaseModel):
                                            collection_name='tasks')
     creation_date = db.DateTimeProperty(auto_now_add=True,
                                         required=True)
-    completion_date = db.DateTimeProperty(required=True)
+    completion_date = db.DateTimeProperty()
     number_of_files = db.IntegerProperty(required=True)
-    status = db.StringProperty(required=False,
+    status = db.StringProperty(required=True,
                                choices=set(['created', 'validated', 'in_progress', 'done']))
     user_service_id = property(BaseModel._get_attr_id_builder('user_service'))
     local_server_id = property(BaseModel._get_attr_id_builder('local_server'))
