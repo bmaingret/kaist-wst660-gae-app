@@ -4,18 +4,25 @@ Created on May 4, 2013
 @author: Baptiste Maingret
 '''
 import datetime
-from protorpc import remote
+from protorpc import remote, message_types
 
 from google.appengine.ext import endpoints
 
 from models import Task, UserService, User, Service, LocalServer
-from api_messages import TaskRequestMessage, TaskMessage
+from api_messages import *
+from google.appengine.ext.endpoints.api_exceptions import NotFoundException,\
+    ForbiddenException
+import fill_datastore
 
 @endpoints.api(name='localserver', version='v1',
                description='Local Server API')
 class LocalServerAPI(remote.Service):
     '''Class that defines the Local Server API endpoints'''
-
+    
+    def __init__(self):
+        #fill_datastore.fill()
+        pass
+    
     @endpoints.method(TaskRequestMessage, TaskMessage,
                       path='task', http_method='GET',
                       name='ls.gettask')    
@@ -28,27 +35,40 @@ class LocalServerAPI(remote.Service):
         Returns:
             An instance of TaskMessage corresponding to ID supplied
         """        
-        user = User()
-        user.put()
-        service = Service(name = "service name")
-        service.put()
-        ls = LocalServer(authentication_token = "auth token")
-        ls.put()
-        us = UserService(user_id=user.key(),
-                         service_id=service.key(),
-                         access_token="access token",
-                         refresh_token="refresh token")
-        us.put()
-        message = Task(user_service_id=us,
-                    local_server_id=ls.key(),
-                    completion_date = datetime.datetime(2013,01,01,00,00),
-                    number_of_files=1,
-                    status='created').to_message()
-        message = TaskMessage(user_service_id="qw")
-        return message
+        query = Task.all()
+        query.filter('__key__ =', request.task_id)
+        task = query.get()
+        if task is None:
+            raise NotFoundException()
+        task_message = task.to_message(*LocalServerFields.Task)
+        return task_message
     
+    @endpoints.method(TaskMessage,
+                      path='task', http_method='POST',
+                      name='ls.posttask')       
+    def post_task(self, request):
+        query = LocalServer.all(keys_only=True)
+        query.filter('authentication_token =', request.auth_token)
+        local_server = query.get()
+        if local_server is None:
+            raise ForbiddenException
+        #Task.put_from_message(request)
+        return message_types.VoidMessage()
+        
+
+    @endpoints.method(TasksRequestMessage, TasksMessage,
+                      path='tasks', http_method='GET',
+                      name='ls.gettasks')      
     def get_tasks(self, request):
-        pass
+        print ''.join(["gettasks: ", request.auth_token])
+        query = LocalServer.all()
+        query.filter('authentication_token =', request.auth_token)
+        local_server = query.get()
+        if local_server is None:
+            raise ForbiddenException()
+        tasks = [task.to_message(*LocalServerFields.Task) for task in local_server.tasks]
+        return TasksMessage(tasks=tasks)
+        
 
 
 
