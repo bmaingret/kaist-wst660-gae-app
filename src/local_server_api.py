@@ -45,14 +45,14 @@ class LocalServerAPI(remote.Service):
     
     @endpoints.method(TaskMessage,
                       path='task', http_method='POST',
-                      name='ls.posttask')       
-    def post_task(self, request):
+                      name='ls.addtask')       
+    def add_task(self, request):
         query = LocalServer.all(keys_only=True)
         query.filter('authentication_token =', request.auth_token)
         local_server = query.get()
         if local_server is None:
             raise ForbiddenException
-        #Task.put_from_message(request)
+        Task.put_from_message(request)
         return message_types.VoidMessage()
         
 
@@ -68,6 +68,18 @@ class LocalServerAPI(remote.Service):
             raise ForbiddenException()
         tasks = [task.to_message(*LocalServerFields.Task) for task in local_server.tasks]
         return TasksMessage(tasks=tasks)
+    
+    @endpoints.method(UserMessage,
+                      path='user', http_method='POST',
+                      name='ls.adduser')  
+    def add_user(self, request):
+        query = LocalServer.all(keys_only=True)
+        query.filter('authentication_token =', request.auth_token)
+        local_server = query.get()
+        if local_server is None:
+            raise ForbiddenException
+        User.put_from_message(request, 'email', 'name')
+        return message_types.VoidMessage()        
         
 
 

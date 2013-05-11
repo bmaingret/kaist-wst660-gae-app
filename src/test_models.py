@@ -13,11 +13,13 @@ class TestModel2(models.BaseModel):
     test_string = db.StringProperty(required=True)
 
 class TestModel(models.BaseModel):
+    _ref_properties = {'test2': 'test_id'}
     test_string = db.StringProperty(required=True)
     test_int = db.IntegerProperty()
     test_bool = db.BooleanProperty()
-    test2 = db.ReferenceProperty(TestModel2, required=True)
-    test_id = property(models.BaseModel._get_attr_id_builder('test2'))
+    test2 = db.ReferenceProperty(TestModel2)
+    test_id = property(models.BaseModel._get_attr_id_builder('test2'),
+                       models.BaseModel._set_attr_id_builder('test2'))
     
 class TestModelMessage(messages.Message):
     test_string = messages.StringField(1)
@@ -54,8 +56,21 @@ class Test(unittest.TestCase):
     def test_get_attr_id(self):
         self.assertIs(self.entity.test_id, str(self.entity.test2.key()))
         self.assertIs(self.message.test_id, self.entity.test_id)
-        self.assertIs(self.message.test_id, str(self.entity.test2.key()))        
-
+        self.assertIs(self.message.test_id, str(self.entity.test2.key()))  
+  
+    def test_set_attr_id(self):
+        self.test_entity = TestModel2(test_string="test")
+        self.test_entity.put()
+        self.entity.test_id = str(self.test_entity.key())
+        self.assertEqual(self.entity.test2.test_string, self.test_entity.test_string)
+          
+    def test_from_message(self):
+        from_message = TestModel.from_message(self.message, *('test_string',
+                                                             'test_int',
+                                                             'test_id')) 
+        self.assertIs(self.entity.test_string, from_message.test_string)
+        self.assertIs(self.entity.test_int, from_message.test_int)
+        self.assertEqual(self.entity.test_id, from_message.test_id)
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_to_message']

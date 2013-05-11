@@ -58,4 +58,9 @@ class TasksMessage(messages.Message):
 class UserServicesMessage(messages.Message):
     """ProtoRPC message definition to represent a list of user services"""
     user_services = messages.MessageField(UserServiceMessage, 1, repeated=True)
+    
+class UserMessage(messages.Message):
+    email = messages.StringField(1)
+    name = messages.StringField(2)
+    auth_token = messages.StringField(3)
 
